@@ -67,7 +67,7 @@ jobs:
         with:
           title: "Auto Merge PR"
           body: "This PR contains an auto merge for the changes."
-          head: ${{ steps.branch_name.outputs.branch }}
+          branch: ${{ steps.branch_name.outputs.branch }}
           base: main
           token: ${{ secrets.COMMIT_TOKEN }}
 
