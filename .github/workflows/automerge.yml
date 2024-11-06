@@ -10,11 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
           token: ${{ secrets.COMMIT_TOKEN }}
-          persist-credentials: false
-          fetch-depth: 0
 
       - name: Set up Git user
         run: |
@@ -31,7 +30,7 @@ jobs:
         run: |
           git checkout -b "${{ steps.branch_name.outputs.branch }}"
 
-      - name: Modify last update
+      - name: Modify last update file
         run: |
           echo "$(date '+%Y-%m-%dT%H:%M:%SZ')" > LAST_UPDATED
 
@@ -57,38 +56,21 @@ jobs:
         env:
           BRANCH_NAME: ${{ steps.branch_name.outputs.branch }}
           COMMIT_TOKEN: ${{ secrets.COMMIT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.COMMIT_TOKEN }}
+          
         run: |
-          git config --global user.email "ansulagrawal9@gmail.com"
-          git config --global user.name "Ansul Agrawal"
           git push -u https://$COMMIT_TOKEN@github.com/${{ github.repository }} "$BRANCH_NAME"
 
-      - name: Create PR using gh CLI
+      - name: Create pull request with gh
         env:
           BRANCH_NAME: ${{ steps.branch_name.outputs.branch }}
           GH_TOKEN: ${{ secrets.COMMIT_TOKEN }}
         run: |
           gh pr create --title "Auto Merge PR" --body "This PR contains an auto merge for the changes." --base main --head "$BRANCH_NAME" --repo "${{ github.repository }}"
 
-      - name: Merge PR using GitHub API
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const pr_number = (await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head: `${context.repo.owner}:${process.env.BRANCH_NAME}`,
-              base: 'main'
-            })).data[0].number;
-            await github.rest.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr_number,
-              merge_method: 'squash',
-            });
-
-      - name: Delete branch after merge
-        if: ${{ success() }}
+      - name: Merge PR using gh
         env:
           BRANCH_NAME: ${{ steps.branch_name.outputs.branch }}
+          GH_TOKEN: ${{ secrets.COMMIT_TOKEN }}
         run: |
-          git push origin --delete "$BRANCH_NAME"
+          gh pr merge "$BRANCH_NAME" --squash --delete-branch --repo "${{ github.repository }}"
