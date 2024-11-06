@@ -2,19 +2,26 @@ name: Auto merge
 
 on:
   schedule:
-    - cron: '0 */12 * * *'
-  workflow_dispatch:
+    - cron: '0 */12 * * *'  # Runs every 12 hours
+  workflow_dispatch:  # Allows manual triggering of the workflow from the GitHub UI
 
 jobs:
   auto_merge:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout to the main branch
+      # Checkout to the main branch with the token
       - uses: actions/checkout@v3
         with:
+          token: ${{ secrets.COMMIT_TOKEN }}  # Use COMMIT_TOKEN for push access
           persist-credentials: false
           fetch-depth: 0
+
+      # Set up Git user configuration globally
+      - name: Set up Git user
+        run: |
+          git config --global user.email "ansulagrawal9@gmail.com"
+          git config --global user.name "Ansul Agrawal"
 
       # Generate a new branch name
       - name: Generate branch name
@@ -36,8 +43,6 @@ jobs:
       # Commit the changes
       - name: Commit changes
         run: |
-          git config --local user.email "ansulagrawal9@gmail.com"
-          git config --local user.name "Ansul Agrawal"
           git add LAST_UPDATED
           arr=(
             "chore(bot): 😂 auto merge"
@@ -58,8 +63,9 @@ jobs:
       - name: Push the new branch
         env:
           BRANCH_NAME: ${{ steps.branch_name.outputs.branch }}
+          COMMIT_TOKEN: ${{ secrets.COMMIT_TOKEN }}
         run: |
-          git push origin "$BRANCH_NAME"
+          git push -u origin "$BRANCH_NAME"
 
       # Create a pull request (PR)
       - name: Create PR
@@ -69,7 +75,7 @@ jobs:
           body: "This PR contains an auto merge for the changes."
           head: ${{ steps.branch_name.outputs.branch }}
           base: main
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.COMMIT_TOKEN }}
 
       # Merge the PR using GitHub API
       - name: Merge PR using GitHub API
