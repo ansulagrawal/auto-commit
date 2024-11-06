@@ -13,11 +13,16 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      # Create a new branch and switch to it
-      - name: Create new branch
+      # Create a new branch name
+      - name: Generate branch name
+        id: branch-name
         run: |
           BRANCH_NAME="auto-merge-$(date +'%Y-%m-%d-%H-%M-%S')"
-          git checkout -b $BRANCH_NAME
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+      # Checkout the new branch
+      - name: Checkout new branch
+        run: |
+          git checkout -b ${{ steps.branch-name.outputs.branch }}
       # Modify last update
       - name: Modify last update
         run: |
@@ -46,14 +51,14 @@ jobs:
       # Push the new branch to GitHub
       - name: Push the new branch
         run: |
-          git push origin $BRANCH_NAME
+          git push origin ${{ steps.branch-name.outputs.branch }}
       # Create a pull request (PR)
       - name: Create PR
         uses: peter-evans/create-pull-request@v4
         with:
           title: "Auto Merge PR"
           body: "This PR contains an auto merge for the changes."
-          head: $BRANCH_NAME
+          head: ${{ steps.branch-name.outputs.branch }}
           base: main
           token: ${{ secrets.GITHUB_TOKEN }}
       # Merge the PR using GitHub API
@@ -79,5 +84,5 @@ jobs:
       # Delete the branch after merging the PR
       - name: Delete branch after merge
         run: |
-          git push origin --delete $BRANCH_NAME
+          git push origin --delete ${{ steps.branch-name.outputs.branch }}
         if: ${{ success() }}
