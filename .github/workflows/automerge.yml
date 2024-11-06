@@ -1,4 +1,4 @@
-name: Auto Merge PR
+name: Auto merge
 
 on:
   schedule:
@@ -20,7 +20,7 @@ jobs:
       # Create a new branch and switch to it
       - name: Create new branch
         run: |
-          BRANCH_NAME="auto-commit-$(date +'%Y-%m-%d-%H-%M-%S')"
+          BRANCH_NAME="auto-merge-$(date +'%Y-%m-%d-%H-%M-%S')"
           git checkout -b $BRANCH_NAME
 
       # Modify last update
@@ -36,32 +36,32 @@ jobs:
           git config --local user.name "Ansul Agrawal"
           git add -A
 
-          arr[0]="chore(bot): 😂 auto commit"
-          arr[1]="chore(bot): 😱 auto commit"
-          arr[2]="chore(bot): 👿 auto commit"
-          arr[3]="chore(bot): 💩 auto commit"
-          arr[4]="chore(bot): 🙏 auto commit"
-          arr[5]="chore(bot): 🙈 auto commit"
-          arr[6]="chore(bot): 🐐 auto commit"
-          arr[7]="chore(bot): 🤖 auto commit"
-          arr[8]="chore(bot): 🟩 auto commit"
-          arr[9]="chore(bot): 👻 auto commit"
+          arr[0]="chore(bot): 😂 auto merge"
+          arr[1]="chore(bot): 😱 auto merge"
+          arr[2]="chore(bot): 👿 auto merge"
+          arr[3]="chore(bot): 💩 auto merge"
+          arr[4]="chore(bot): 🙏 auto merge"
+          arr[5]="chore(bot): 🙈 auto merge"
+          arr[6]="chore(bot): 🐐 auto merge"
+          arr[7]="chore(bot): 🤖 auto merge"
+          arr[8]="chore(bot): 🟩 auto merge"
+          arr[9]="chore(bot): 👻 auto merge"
 
           rand=$[$RANDOM % ${#arr[@]}]
 
           git commit -m "${arr[$rand]}"
 
-      # Push the new branch to GitHub
+      # Push the new branch to GitHub and set the upstream
       - name: Push the new branch
         run: |
-          git push origin $BRANCH_NAME
+          git push --set-upstream origin $BRANCH_NAME
 
       # Create a pull request (PR)
       - name: Create PR
         uses: peter-evans/create-pull-request@v4
         with:
-          title: "Auto Commit PR"
-          body: "This PR contains an auto commit for the changes."
+          title: "Auto Merge PR"
+          body: "This PR contains an auto merge for the changes."
           head: $BRANCH_NAME
           base: main
           token: ${{ secrets.GITHUB_TOKEN }}
