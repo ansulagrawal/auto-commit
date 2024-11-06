@@ -65,6 +65,7 @@ jobs:
       - name: Create PR using gh CLI
         env:
           BRANCH_NAME: ${{ steps.branch_name.outputs.branch }}
+          GH_TOKEN: ${{ secrets.COMMIT_TOKEN }}
         run: |
           gh pr create --title "Auto Merge PR" --body "This PR contains an auto merge for the changes." --base main --head "$BRANCH_NAME" --repo "${{ github.repository }}"
 
