@@ -1,4 +1,4 @@
-name: Auto commit
+name: Auto Merge
 
 on:
   schedule:
