@@ -65,6 +65,8 @@ jobs:
           BRANCH_NAME: ${{ steps.branch_name.outputs.branch }}
           COMMIT_TOKEN: ${{ secrets.COMMIT_TOKEN }}
         run: |
+          git config --global user.email "ansulagrawal9@gmail.com"
+          git config --global user.name "Ansul Agrawal"
           git push -u origin "$BRANCH_NAME"
 
       # Create a pull request (PR)
