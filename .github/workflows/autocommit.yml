@@ -1,18 +1,27 @@
-name: Auto commit
+name: Auto merge
 
 on:
   schedule:
-    - cron: '0 */12 * * *'
+    - cron: '0 */12 * * *'  # Runs every 12 hours
+
+  # Allows manual triggering of the workflow from the GitHub UI
+  workflow_dispatch:
 
 jobs:
-  auto_commit:
+  auto_merge:
     runs-on: ubuntu-latest
     steps:
-      # Checkout to current branch
+      # Checkout to the main branch
       - uses: actions/checkout@v3
         with:
           persist-credentials: false
           fetch-depth: 0
+
+      # Create a new branch and switch to it
+      - name: Create new branch
+        run: |
+          BRANCH_NAME="auto-merge-$(date +'%Y-%m-%d-%H-%M-%S')"
+          git checkout -b $BRANCH_NAME
 
       # Modify last update
       - name: Modify last update
@@ -27,25 +36,62 @@ jobs:
           git config --local user.name "Ansul Agrawal"
           git add -A
 
-          arr[0]="chore(bot): 😂 auto commit"
-          arr[1]="chore(bot): 😱 auto commit"
-          arr[2]="chore(bot): 👿 auto commit"
-          arr[3]="chore(bot): 💩 auto commit"
-          arr[4]="chore(bot): 🙏 auto commit"
-          arr[5]="chore(bot): 🙈 auto commit"
-          arr[6]="chore(bot): 🐐 auto commit"
-          arr[7]="chore(bot): 🤖 auto commit"
-          arr[8]="chore(bot): 🟩 auto commit"
-          arr[9]="chore(bot): 👻 auto commit"
+          arr[0]="chore(bot): 😂 auto merge"
+          arr[1]="chore(bot): 😱 auto merge"
+          arr[2]="chore(bot): 👿 auto merge"
+          arr[3]="chore(bot): 💩 auto merge"
+          arr[4]="chore(bot): 🙏 auto merge"
+          arr[5]="chore(bot): 🙈 auto merge"
+          arr[6]="chore(bot): 🐐 auto merge"
+          arr[7]="chore(bot): 🤖 auto merge"
+          arr[8]="chore(bot): 🟩 auto merge"
+          arr[9]="chore(bot): 👻 auto merge"
 
           rand=$[$RANDOM % ${#arr[@]}]
 
           git commit -m "${arr[$rand]}"
 
-      # Push the update again
-      - name: GitHub Push
-        uses: ad-m/github-push-action@v0.6.0
+      # Ensure the correct remote is set before pushing
+      - name: Ensure the correct remote is set
+        run: |
+          git remote -v  # Confirm remotes
+          git push --set-upstream origin $BRANCH_NAME
+
+      # Create a pull request (PR)
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v4
         with:
-          directory: '.'
-          github_token: ${{ secrets.COMMIT_TOKEN }}
-          branch: main
+          title: "Auto Merge PR"
+          body: "This PR contains an auto merge for the changes."
+          head: $BRANCH_NAME
+          base: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Merge the PR using GitHub API
+      - name: Merge PR using GitHub API
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pr_number = ${{ steps.create-pr.outputs.pull-request-number }};
+            const token = process.env.GITHUB_TOKEN;
+
+            // Fetch PR details
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number
+            });
+
+            // Merge PR using GitHub API
+            await github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number,
+              merge_method: 'squash', // You can choose 'merge', 'rebase', or 'squash'
+            });
+
+      # Delete the branch after merging the PR
+      - name: Delete branch after merge
+        run: |
+          git push origin --delete $BRANCH_NAME
+        if: ${{ success() }}
