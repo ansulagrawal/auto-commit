@@ -58,18 +58,17 @@ jobs:
           BRANCH_NAME: ${{ steps.branch_name.outputs.branch }}
           COMMIT_TOKEN: ${{ secrets.COMMIT_TOKEN }}
         run: |
-          git config --global user.email "ansulagrawal9@gmail.com"
-          git config --global user.name "Ansul Agrawal"
           git push -u https://$COMMIT_TOKEN@github.com/${{ github.repository }} "$BRANCH_NAME"
 
       - name: Create PR
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v7
         with:
+          token: ${{ secrets.COMMIT_TOKEN }}
           title: "Auto Merge PR"
           body: "This PR contains an auto merge for the changes."
           branch: ${{ steps.branch_name.outputs.branch }}
           base: main
-          token: ${{ secrets.COMMIT_TOKEN }}
+          delete-branch: false
 
       - name: Merge PR using GitHub API
         uses: actions/github-script@v6
