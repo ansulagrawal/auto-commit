@@ -2,45 +2,39 @@ name: Auto merge
 
 on:
   schedule:
-    - cron: '0 */12 * * *'  # Runs every 12 hours
-  workflow_dispatch:  # Allows manual triggering of the workflow from the GitHub UI
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
 
 jobs:
   auto_merge:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout to the main branch with the token
       - uses: actions/checkout@v3
         with:
-          token: ${{ secrets.COMMIT_TOKEN }}  # Use COMMIT_TOKEN for push access
+          token: ${{ secrets.COMMIT_TOKEN }}
           persist-credentials: false
           fetch-depth: 0
 
-      # Set up Git user configuration globally
       - name: Set up Git user
         run: |
           git config --global user.email "ansulagrawal9@gmail.com"
           git config --global user.name "Ansul Agrawal"
 
-      # Generate a new branch name
       - name: Generate branch name
         id: branch_name
         run: |
           BRANCH_NAME="auto-merge-$(date +'%Y-%m-%d-%H-%M-%S')"
           echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
-      # Checkout the new branch
       - name: Checkout new branch
         run: |
           git checkout -b "${{ steps.branch_name.outputs.branch }}"
 
-      # Modify the last update file
       - name: Modify last update
         run: |
           echo "$(date '+%Y-%m-%dT%H:%M:%SZ')" > LAST_UPDATED
 
-      # Commit the changes
       - name: Commit changes
         run: |
           git add LAST_UPDATED
@@ -59,7 +53,6 @@ jobs:
           rand=$((RANDOM % ${#arr[@]}))
           git commit -m "${arr[$rand]}"
 
-      # Push the new branch to GitHub
       - name: Push the new branch
         env:
           BRANCH_NAME: ${{ steps.branch_name.outputs.branch }}
@@ -67,9 +60,8 @@ jobs:
         run: |
           git config --global user.email "ansulagrawal9@gmail.com"
           git config --global user.name "Ansul Agrawal"
-          git push -u origin "$BRANCH_NAME"
+          git push -u https://$COMMIT_TOKEN@github.com/${{ github.repository }} "$BRANCH_NAME"
 
-      # Create a pull request (PR)
       - name: Create PR
         uses: peter-evans/create-pull-request@v4
         with:
@@ -79,7 +71,6 @@ jobs:
           base: main
           token: ${{ secrets.COMMIT_TOKEN }}
 
-      # Merge the PR using GitHub API
       - name: Merge PR using GitHub API
         uses: actions/github-script@v6
         with:
@@ -89,10 +80,9 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pr_number,
-              merge_method: 'squash',  // 'merge', 'rebase', or 'squash' can be used here
+              merge_method: 'squash',
             });
 
-      # Delete the branch after merging the PR
       - name: Delete branch after merge
         if: ${{ success() }}
         env:
