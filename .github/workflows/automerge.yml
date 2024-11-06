@@ -61,7 +61,7 @@ jobs:
           git push -u https://$COMMIT_TOKEN@github.com/${{ github.repository }} "$BRANCH_NAME"
 
       - name: Create PR
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v6
         with:
           title: "Auto Merge PR"
           body: "This PR contains an auto merge for the changes."
