@@ -1,14 +1,14 @@
-name: Auto Merge
+name: Auto Merge PR
 
 on:
   schedule:
-    -  cron: '0 */12 * * *'
+    - cron: '0 */12 * * *'  # Runs every 12 hours
 
   # Allows manual triggering of the workflow from the GitHub UI
   workflow_dispatch:
 
 jobs:
-  auto_commit:
+  auto_merge:
     runs-on: ubuntu-latest
     steps:
       # Checkout to the main branch
@@ -66,13 +66,28 @@ jobs:
           base: main
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Merge the PR
-      - name: Merge PR
-        uses: peter-evans/merge-pull-request@v3
+      # Merge the PR using GitHub API
+      - name: Merge PR using GitHub API
+        uses: actions/github-script@v6
         with:
-          pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
-          merge-method: squash
-          token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr_number = ${{ steps.create-pr.outputs.pull-request-number }};
+            const token = process.env.GITHUB_TOKEN;
+
+            // Fetch PR details
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number
+            });
+
+            // Merge PR using GitHub API
+            await github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number,
+              merge_method: 'squash', // You can choose 'merge', 'rebase', or 'squash'
+            });
 
       # Delete the branch after merging the PR
       - name: Delete branch after merge
