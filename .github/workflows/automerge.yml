@@ -58,22 +58,26 @@ jobs:
           BRANCH_NAME: ${{ steps.branch_name.outputs.branch }}
           COMMIT_TOKEN: ${{ secrets.COMMIT_TOKEN }}
         run: |
+          git config --global user.email "ansulagrawal9@gmail.com"
+          git config --global user.name "Ansul Agrawal"
           git push -u https://$COMMIT_TOKEN@github.com/${{ github.repository }} "$BRANCH_NAME"
 
-      - name: Create PR
-        uses: peter-evans/create-pull-request@v6
-        with:
-          title: "Auto Merge PR"
-          body: "This PR contains an auto merge for the changes."
-          branch: ${{ steps.branch_name.outputs.branch }}
-          base: main
-          token: ${{ secrets.COMMIT_TOKEN }}
+      - name: Create PR using gh CLI
+        env:
+          BRANCH_NAME: ${{ steps.branch_name.outputs.branch }}
+        run: |
+          gh pr create --title "Auto Merge PR" --body "This PR contains an auto merge for the changes." --base main --head "$BRANCH_NAME" --repo "${{ github.repository }}"
 
       - name: Merge PR using GitHub API
         uses: actions/github-script@v6
         with:
           script: |
-            const pr_number = ${{ steps.create_pr.outputs.pull_request_number }};
+            const pr_number = (await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${process.env.BRANCH_NAME}`,
+              base: 'main'
+            })).data[0].number;
             await github.rest.pulls.merge({
               owner: context.repo.owner,
               repo: context.repo.repo,
