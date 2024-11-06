@@ -63,12 +63,11 @@ jobs:
       - name: Create PR
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.COMMIT_TOKEN }}
           title: "Auto Merge PR"
           body: "This PR contains an auto merge for the changes."
           branch: ${{ steps.branch_name.outputs.branch }}
           base: main
-          delete-branch: false
+          token: ${{ secrets.COMMIT_TOKEN }}
 
       - name: Merge PR using GitHub API
         uses: actions/github-script@v6
