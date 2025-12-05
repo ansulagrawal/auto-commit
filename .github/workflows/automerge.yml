@@ -1,9 +1,13 @@
 name: Auto merge
 
 on:
-  schedule:
-    - cron: '0 */12 * * *'
   workflow_dispatch:
+  # schedule:
+    # - cron: '0 */12 * * *'
+
+  #schedule:
+   # - cron: '0 */12 * * *'
+ # workflow_dispatch:
 
 jobs:
   auto_merge:
